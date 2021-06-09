@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 import { Template } from '../../components';
 import { SERVER_IP } from '../../private';
 import './viewOrders.css';
+
+const DELETE_ORDER_URL = `${SERVER_IP}/api/delete-order`;
 
 class ViewOrders extends Component {
     state = {
@@ -20,6 +23,25 @@ class ViewOrders extends Component {
             });
     }
 
+    handleDeleteOrder (order_ID) {
+        fetch(DELETE_ORDER_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: order_ID
+            })
+        }).then(res => {
+            this.setState(prev => ({
+                orders: prev.orders.filter(order => order._id !== order_ID)
+            }))
+        }).catch(err => {
+            console.log(err);
+            return;
+        })
+    }
+
     render() {
         return (
             <Template>
@@ -33,12 +55,14 @@ class ViewOrders extends Component {
                                     <p>Ordered by: {order.ordered_by || ''}</p>
                                 </div>
                                 <div className="col-md-4 d-flex view-order-middle-col">
-                                    <p>Order placed at {`${createdDate.getHours()}:${createdDate.getMinutes()}:${createdDate.getSeconds()}`}</p>
+                                    <p>Order placed at {`${createdDate.toLocaleTimeString()}`}</p>
                                     <p>Quantity: {order.quantity}</p>
                                  </div>
                                  <div className="col-md-4 view-order-right-col">
-                                     <button className="btn btn-success">Edit</button>
-                                     <button className="btn btn-danger">Delete</button>
+                                     <Link to={{pathname: '/order', order}}>
+                                        <button className="btn btn-success">Edit</button>
+                                     </Link>
+                                     <button className="btn btn-danger" onClick={() => this.handleDeleteOrder(order._id)}>Delete</button>
                                  </div>
                             </div>
                         );
