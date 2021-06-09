@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { SERVER_IP } from '../../private';
 import './orderForm.css';
 
+const EDIT_ORDER_URL = `${SERVER_IP}/api/edit-order`
 const ADD_ORDER_URL = `${SERVER_IP}/api/add-order`
 
 const mapStateToProps = (state) => ({
@@ -11,11 +12,13 @@ const mapStateToProps = (state) => ({
 })
 
 class OrderForm extends Component {
+
     constructor(props) {
         super(props);
+        const { order } = this.props.location;
         this.state = {
-            order_item: "",
-            quantity: "1"
+            order_item: order ? order.order_item : "",
+            quantity: order ? order.quantity : "1"
         }
     }
 
@@ -28,25 +31,49 @@ class OrderForm extends Component {
     }
 
     submitOrder(event) {
+
         event.preventDefault();
+
         if (this.state.order_item === "") return;
-        fetch(ADD_ORDER_URL, {
+
+        const { order } = this.props.location;
+        var API_URL = "";
+
+        const orderObj = {
+            order_item: this.state.order_item,
+            quantity: this.state.quantity,
+            ordered_by: this.props.auth.email || 'Unknown!'
+        };
+
+        if (order) {
+            API_URL = EDIT_ORDER_URL;
+            orderObj.id = order._id;
+        }
+        else{
+            API_URL = ADD_ORDER_URL;
+        }
+
+        fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                order_item: this.state.order_item,
-                quantity: this.state.quantity,
-                ordered_by: this.props.auth.email || 'Unknown!',
-            }),
+            body: JSON.stringify(orderObj),
             headers: {
                 'Content-Type': 'application/json'
             }
         })
         .then(res => res.json())
-        .then(response => console.log("Success", JSON.stringify(response)))
-        .catch(error => console.error(error));
+        .then(response => {
+            console.log("Success", JSON.stringify(response));
+        })
+        .catch(err => {
+            console.error(err);
+            return;
+        });
     }
 
     render() {
+
+        const { order } = this.props.location;
+
         return (
             <Template>
                 <div className="form-wrapper">
@@ -72,7 +99,9 @@ class OrderForm extends Component {
                             <option value="5">5</option>
                             <option value="6">6</option>
                         </select>
-                        <button type="button" className="order-btn" onClick={(event) => this.submitOrder(event)}>Order It!</button>
+                        <button type="button" className="order-btn" onClick={(event) => this.submitOrder(event)}>
+                            { order ? 'Update' : 'Order It!' }
+                        </button>
                     </form>
                 </div>
             </Template>
